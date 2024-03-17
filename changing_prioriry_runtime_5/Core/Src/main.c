@@ -15,6 +15,8 @@ void vGreenLedControllerTask(void *pvParameters);
 typedef uint32_t TaskProfiler;
 TaskProfiler BlueTaskProfiler,RedTaskProfiler,GreenTaskProfiler;//used for checking whether tasks are getting started or not
 
+TaskHandle_t blue_handle,red_handle,green_handle;
+
 int main(void)
 {
 
@@ -27,34 +29,32 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
 
-  //100 bytes stack size
-  //handle is used for read task info and make the task do other functions (here it is NULL)
-  //priority is 1. here parameters are NULL
-  //larger number means higher priority
-  //if all three tasks have same priority, there will be issues here as uart takes some time for printing the debug statements.
-  //and there will be a case where time slice(context switch) occurs before printing. This might happen for all tasks.
-  //means no single task has enough time for printing the debug statement using uart2
-
   xTaskCreate(vBlueLedControllerTask,
 		  	  "Blue Led Controller",
 			  100,
 			  NULL,
-			  1,
-			  NULL);
+			  2,
+			  &blue_handle);
 
   xTaskCreate(vRedLedControllerTask,
  		  	  "Red Led Controller",
  			  100,
  			  NULL,
- 			  1,
- 			  NULL);
+ 			  2,
+			  &red_handle);
+  //task handle helps us to configure/make changes the task during runtime. we need to pass address of handle type
+
+  //setting high priority to green. lower priority task cannot interrupt higher priority task
+  //time sharing only happens when the priority of all tasks are equal.(uses round robin)
+  //here only green will execute if priority is 2
+  //if we make both red and green as priority 2, then time sharing happens between red and green.meanwhile blue cant execute because of low priority
 
   xTaskCreate(vGreenLedControllerTask,
   		  	  "Green Led Controller",
   			  100,
   			  NULL,
   			  1,
-  			  NULL);
+			  &green_handle);
 
   /* Init scheduler */
   vTaskStartScheduler();
@@ -78,16 +78,24 @@ void vBlueLedControllerTask(void *pvParameters)
 	while(1)
 	{
 		BlueTaskProfiler++;
-		//printf("vBlueLedControllerTask running \n\r");
 	}
 }
 
 void vRedLedControllerTask(void *pvParameters)
 {
+	int i;
 	while(1)
 	{
 		RedTaskProfiler++;
-		//printf("vRedLedControllerTask running \n\r");
+		//adding delay
+		for(i=0;i<700000;i++)
+		{
+		}
+		//changing priority of green task to 3
+		//when red task is called(after completion of blue) it is changing the priority of green to 3(higher than blue and red).
+		//because of this scheduler removes red from the running state and green will start executing forever
+		vTaskPrioritySet(green_handle,3);
+
 	}
 }
 
@@ -96,7 +104,6 @@ void vGreenLedControllerTask(void *pvParameters)
 	while(1)
 	{
 		GreenTaskProfiler++;
-		//printf("vGreenLedControllerTask running \n\r");
 	}
 }
 
