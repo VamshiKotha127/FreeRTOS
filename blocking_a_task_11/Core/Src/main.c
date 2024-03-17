@@ -1,7 +1,6 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include <stdio.h>
-#include <stdbool.h>
 
 UART_HandleTypeDef huart2;
 
@@ -13,16 +12,12 @@ void vBlueLedControllerTask(void *pvParameters);
 void vRedLedControllerTask(void *pvParameters);
 void vGreenLedControllerTask(void *pvParameters);
 
-uint32_t execution_monitor;
-uint32_t resume_monitor;
-bool is_killed = false;
-
 typedef uint32_t TaskProfiler;
 TaskProfiler BlueTaskProfiler,RedTaskProfiler,GreenTaskProfiler;//used for checking whether tasks are getting started or not
 
-TaskHandle_t blue_handle,red_handle,green_handle;
-
-uint32_t green_priority;//store priority of green task
+const TickType_t _50ms = pdMS_TO_TICKS(50); // RTOS switches tasks every tick time. means after one tick it changes task
+//Nearly every RTOS is equipped with a time source, generally provided by a hardware timer that interrupts the CPU at a certain rate (called the Tick Rate) which is generally chosen to be between 10 and 1000 Hz; with 1000 Hz being the most common.
+//In FreeRTOS, the default time slice is 1 ms, and a time slice is known as a “tick.” A hardware timer is configured to create an interrupt every 1 ms. The ISR for that timer runs the scheduler, which chooses the task to run next. At each tick interrupt, the task with the highest priority is chosen to run.
 
 int main(void)
 {
@@ -41,21 +36,21 @@ int main(void)
 			  100,
 			  NULL,
 			  1,
-			  &blue_handle);
+			  NULL);
 
   xTaskCreate(vRedLedControllerTask,
  		  	  "Red Led Controller",
  			  100,
  			  NULL,
  			  1,
-			  &red_handle);
+ 			  NULL);
 
   xTaskCreate(vGreenLedControllerTask,
   		  	  "Green Led Controller",
   			  100,
   			  NULL,
-  			  1,
-			  &green_handle);
+  			  2,
+  			  NULL);
 
   /* Init scheduler */
   vTaskStartScheduler();
@@ -78,10 +73,6 @@ void vBlueLedControllerTask(void *pvParameters)
 	while(1)
 	{
 		BlueTaskProfiler++;
-		for(int i=0;i < 100000;i++)
-		{
-
-		}
 	}
 }
 
@@ -90,22 +81,7 @@ void vRedLedControllerTask(void *pvParameters)
 	while(1)
 	{
 		RedTaskProfiler++;
-		for(int i=0;i < 100000;i++)
-		{
-
-		}
-
-		execution_monitor++;
-
-		//we are going to suspend red task from red task
-
-		if(execution_monitor >= 50)
-		{
-			is_killed = true;
-			execution_monitor=0;
-			vTaskDelete(NULL); //killing red task. task gets killed at this line only
-		}
-
+		vTaskDelay(_50ms); // blocking red task for 50ms. This is the precise delay. and after the delay red task will enter ready queue
 	}
 }
 
@@ -114,34 +90,6 @@ void vGreenLedControllerTask(void *pvParameters)
 	while(1)
 	{
 		GreenTaskProfiler++;
-		for(int i=0;i < 100000;i++)
-		{
-
-		}
-
-		if(is_killed)
-		{
-			resume_monitor++;
-			if(resume_monitor >= 30)
-			{
-				vTaskResume(red_handle);//resuming red task which was killed. But it wont get resumed as red task is deleted not suspended
-				resume_monitor=0;
-				is_killed=false;
-
-				//there is another state called block state. task will enter block when its waiting for a resource like semaphore (key) or sleep is called in the task till some event. when it gets the resource again it is added in the ready queue
-				//we can also suspend a task from block state. then task goes to suspend stage which can be sent to ready state on resuming
-				//functions which make the task go into block state is called as blocking APIs
-
-				//Two things cause task to enter into block state : 1. Time related event 2. Synchronization event
-
-				//vTicksToDelay(TickType_t xTicksToDelay) -->this blocking API is used for delaying the task till some time
-				// it takes number of ticks as an argument.
-				//The number of tick interrupts that the calling task will remain in the blocked stage before being transitioned back into the ready state
-
-				//pdMS_TO_TICKS() -->	converts a time specified in milliseconds into a time specified in tick
-				//vTaskDelay(pdMS_TO_TICKS(100)) --> passing 100ms as delay which gets converted into ticks and then passed into vTaskDelay function
-			}
-		}
 	}
 }
 
