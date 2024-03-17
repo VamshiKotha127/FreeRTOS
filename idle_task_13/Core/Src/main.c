@@ -39,6 +39,9 @@ int main(void)
 //we have to manually enable the idle hook/task function using configUSE_IDLE_HOOK() in freeRTOSConfig.h
 //set configIDLE_SHOULD_YIELD to 1 is used to prevent idle task from consuming CPU time. It means idle task should yield to any high priority task when high priority task comes during idle task time slice
 
+//tick hook is a function that is called by the kernel during each tick interrupt
+//tick hook functions execute within the context of the tick interrupt, and so must be kept very short,must use only a moderate amount of stack space and must not call any FreeRTOS API functions that donot end with FromISR()
+//tick hook function should be light. we need to configure this using configUSE_TICK_HOOK(0 in FreeRTOSConfig.h
 
   xTaskCreate(vBlueLedControllerTask,
 		  	  "Blue Led Controller",
