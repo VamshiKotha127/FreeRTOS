@@ -8,16 +8,14 @@
 
 #define STACK_SIZE 128 // 128*4 bytes
 
-//here one task is receiving data and other task is handling the receiving the received data
-//creating handler task which receives bytes from other task using queues
+//here we dont use polling. we use interrupt method for getting the data from usart
 
 static QueueHandle_t uart2_BytesReceived = NULL;
-
+static int rxInProgress=0;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 void vHandlerTask(void* pvParameters);
-void vPolledUartReceiver(void *pvParameters);
-
+void start_rx_interrupt(void);
 
 uint8_t btn_state;
 uint32_t sensor_value;
@@ -33,7 +31,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
 
-  xTaskCreate(vPolledUartReceiver, "polledUartRx", STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
   xTaskCreate(vHandlerTask, "uartPrintTask", STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
 
   uart2_BytesReceived = xQueueCreate(10, sizeof(char));
@@ -46,20 +43,45 @@ int main(void)
   }
 }
 
-void vPolledUartReceiver(void *pvParameters)
+
+//sets up an interrupt rx for usart2
+void start_rx_interrupt(void)
 {
-	uint8_t nextByte;
-	USART2_UART_RX_Init(); // here in this function we are polling
-	while(1)
+	rxInProgress = 1;
+	USART2->CR1 |= 0x0020; //Enable RX Interrupt
+	NVIC_SetPriority(USART2_IRQn, 6);
+	NVIC_EnableIRQ(USART2_IRQn);
+
+}
+
+void USART2_IRQHandler(void)
+{
+	//ISR
+	//In freertos we can wake up high priority task after completion of interrupt instead of interrupted task
+	portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
+
+	if(USART2->SR & 0x0020)
 	{
-	  nextByte = USART2_read();
-	  xQueueSend(uart2_BytesReceived, &nextByte,0);
+		uint8_t tempVal = (uint8_t) USART2->DR;
+
+		if(rxInProgress)
+		{
+			//here ISR at the end is main
+			xQueueSendFromISR(uart2_BytesReceived, &tempVal, &xHigherPriorityTaskWoken);
+		}
 	}
+
+	//yield from isr -->give up processor from ISR
+
+	portYIELD_FROM_ISR(xHigherPriorityTaskWoken); //saying that we don't need to bring the high priority task
 }
 
 char rcvByte;
 void vHandlerTask(void* pvParameters)
 {
+	USART2_UART_RX_Init();	//initialise usart
+	start_rx_interrupt(); //initialising interrupt settings
+
 	//handle the received bytes
 	while(1)
 	{

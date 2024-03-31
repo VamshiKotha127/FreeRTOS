@@ -6,18 +6,24 @@
 
 #include <stdio.h>
 
-#define STACK_SIZE 128 // 128*4 bytes
 
-//here one task is receiving data and other task is handling the receiving the received data
-//creating handler task which receives bytes from other task using queues
+//here we dont use polling. we use interrupt method for getting the data from usart
+//transferring packets instead of single byte
+
+#define STACK_SIZE 128// 128*4 bytes
+
+#define EXPECTED_PKT_LENGTH 5
 
 static QueueHandle_t uart2_BytesReceived = NULL;
-
+static int rxInProgress=0; //is reception is int progress
+static uint16_t rxLen=0;//length that we want to receive in bytes
+static uint8_t* rxBuff = NULL;//pointer to the buffer when we are gonna store the received data
+static uint16_t rxItr = 0;//itertor
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 void vHandlerTask(void* pvParameters);
-void vPolledUartReceiver(void *pvParameters);
-
+int start_rx_interrupt(uint8_t* buffer, uint16_t len);
+static SemaphoreHandle_t rxDone=NULL;
 
 uint8_t btn_state;
 uint32_t sensor_value;
@@ -33,7 +39,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
 
-  xTaskCreate(vPolledUartReceiver, "polledUartRx", STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+  rxDone = xSemaphoreCreateBinary();
   xTaskCreate(vHandlerTask, "uartPrintTask", STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
 
   uart2_BytesReceived = xQueueCreate(10, sizeof(char));
@@ -46,24 +52,91 @@ int main(void)
   }
 }
 
-void vPolledUartReceiver(void *pvParameters)
+
+//sets up an interrupt rx for usart2
+int start_rx_interrupt(uint8_t* buffer, uint16_t len)
 {
-	uint8_t nextByte;
-	USART2_UART_RX_Init(); // here in this function we are polling
-	while(1)
+	if(!rxInProgress && buffer != NULL)
 	{
-	  nextByte = USART2_read();
-	  xQueueSend(uart2_BytesReceived, &nextByte,0);
+		rxInProgress = 1;
+		rxLen=len;
+		rxBuff = buffer;
+		rxItr =0;
+
+		USART2->CR1 |= 0x0020; //Enable RX Interrupt
+		NVIC_SetPriority(USART2_IRQn, 6);
+		NVIC_EnableIRQ(USART2_IRQn);
+		return 0;
 	}
+
+	return -1;
+
 }
 
-char rcvByte;
+void USART2_IRQHandler(void)
+{
+	//ISR
+	//In freertos we can wake up high priority task after completion of interrupt instead of interrupted task
+	portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
+
+	if(USART2->SR & 0x0020)
+	{
+		uint8_t tempVal = (uint8_t) USART2->DR;
+
+		if(rxInProgress)
+		{
+			rxBuff[rxItr++] = tempVal;
+			if(rxItr == rxLen)
+			{
+				rxInProgress = 0;
+
+				//here ISR is needed at the end
+				xSemaphoreGiveFromISR(rxDone,&xHigherPriorityTaskWoken);
+			}
+		}
+	}
+
+	//yield from isr -->give up processor from ISR
+
+	portYIELD_FROM_ISR(xHigherPriorityTaskWoken); //saying that we don't need to bring the high priority task
+}
+
+
+uint8_t rxData[EXPECTED_PKT_LENGTH];
+
+char rxCode[50] = {0};
+
 void vHandlerTask(void* pvParameters)
 {
+	USART2_UART_RX_Init();	//initialise usart
+
+	for(int i=0 ; i < EXPECTED_PKT_LENGTH ; i++)
+	{
+		rxData[i] = 0; //initialise buffer
+	}
+	const TickType_t timeout = pdMS_TO_TICKS(8000); //8seconds
+
 	//handle the received bytes
 	while(1)
 	{
-		xQueueReceive(uart2_BytesReceived,&rcvByte,portMAX_DELAY); //delaying until we receive the data
+		start_rx_interrupt(rxBuff, EXPECTED_PKT_LENGTH); //initialising interrupt settings
+
+		if(xSemaphoreTake(rxDone,timeout) == pdPASS)
+		{
+			//means if we are able to receive the semaphore within the timeout
+			if(EXPECTED_PKT_LENGTH == rxItr)
+			{
+				sprintf(rxCode, "received"); //if we use printf it will again usart transmit instead we are using sprintf which will place the characters in buffer
+			}
+			else
+			{
+				sprintf(rxCode, "Length Mismatch");
+			}
+		}
+		else
+		{
+			sprintf(rxCode, "timeout");
+		}
 	}
 }
 
