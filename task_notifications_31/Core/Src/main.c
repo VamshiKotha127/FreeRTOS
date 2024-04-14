@@ -6,8 +6,25 @@
 
 #include <stdio.h>
 
-	//we want to send a notification to handler function when a push button is pressed
+	//Here we want to send a notification to handler function when a push button is pressed
 
+//Task notifications allow tasks to communicate with each other directly without going through communication objects such as queue, semaphores and event groups
+//
+//configUSE_TASK_NOTIFICATIONS to use notifications
+//
+//notifications have two states:
+//pending and not pending
+//
+//1. when a task receives a notification, its notification state is set to pending
+//2. when a task reads its notification value, its notification state is set to not pending
+//
+//notifications are faster than using queues, semaphores and event groups to perform an equivalent operation
+//
+//notifications requires significantly less RAM than using a queue, semaphore or an event group
+//
+//unlike queues, semaphores and event groups, task notifications cannot be used to send events or data from a task to an ISR although they can be used to send events or data from an ISR to a task
+//
+//Unlike queuee, semaphores and event groups, task notifications cannot be sent to multiple tasks( only 1-1 relationship)
 
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
