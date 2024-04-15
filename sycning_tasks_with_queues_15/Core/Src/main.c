@@ -32,7 +32,7 @@ int main(void)
   yearQueue = xQueueCreate(5,sizeof(int32_t));
 
   //creating two sender tasks of same priority and one receiver task of higher priority
-  //Output of this experiment is sendertask1 and sendertask2 will send the queue one after the another as they have same priority
+  //Output of this experiment is sendertask1 and sendertask2 will send to the queue one after the another as they have same priority
   //sending is synchronised by assigning same priority
 
   xTaskCreate(vSenderTask1,

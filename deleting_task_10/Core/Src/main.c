@@ -97,8 +97,6 @@ void vRedLedControllerTask(void *pvParameters)
 
 		execution_monitor++;
 
-		//we are going to suspend red task from red task
-
 		if(execution_monitor >= 50)
 		{
 			is_killed = true;
@@ -131,7 +129,7 @@ void vGreenLedControllerTask(void *pvParameters)
 				//there is another state called block state. task will enter block when its waiting for a resource like semaphore (key) or sleep is called in the task till some event. when it gets the resource again it is added in the ready queue
 				//we can also suspend a task from block state. then task goes to suspend stage which can be sent to ready state on resuming
 				//functions which make the task go into block state is called as blocking APIs
-
+				//suspended block state --> processes from block state are moved to secondary memory
 				//Two things cause task to enter into block state : 1. Time related event 2. Synchronization event
 
 				//vTicksToDelay(TickType_t xTicksToDelay) -->this blocking API is used for delaying the task till some time

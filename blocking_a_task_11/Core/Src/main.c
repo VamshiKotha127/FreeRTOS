@@ -15,7 +15,7 @@ void vGreenLedControllerTask(void *pvParameters);
 typedef uint32_t TaskProfiler;
 TaskProfiler BlueTaskProfiler,RedTaskProfiler,GreenTaskProfiler;//used for checking whether tasks are getting started or not
 
-const TickType_t _50ms = pdMS_TO_TICKS(50); // RTOS switches tasks every tick time. means after one tick it changes task
+const TickType_t _50ms = pdMS_TO_TICKS(50); // RTOS switches tasks every tick time. means after one tick it changes task(for same priority tasks)
 //Nearly every RTOS is equipped with a time source, generally provided by a hardware timer that interrupts the CPU at a certain rate (called the Tick Rate) which is generally chosen to be between 10 and 1000 Hz; with 1000 Hz being the most common.
 //In FreeRTOS, the default time slice is 1 ms, and a time slice is known as a “tick.” A hardware timer is configured to create an interrupt every 1 ms. The ISR for that timer runs the scheduler, which chooses the task to run next. At each tick interrupt, the task with the highest priority is chosen to run.
 

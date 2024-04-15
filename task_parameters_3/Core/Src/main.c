@@ -44,7 +44,6 @@ int main(void)
   //100 bytes stack size
   //handle is used for read task info and make the task do other functions (here it is NULL)
   //priority is 1. here parameters are NULL
-  //lower number means higher priority
   //if all three tasks have same priority, there will be issues here as uart takes some time for printing the debug statements.
   //and there will be a case where time slice(context switch) occurs before printing. This might happen for all tasks.
   //means no single task has enough time for printing the debug statement using uart2

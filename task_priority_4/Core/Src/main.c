@@ -50,7 +50,7 @@ int main(void)
  			  NULL);
 
   //setting high priority to green. lower priority task cannot interrupt higher priority task
-  //time sharing only happens when the priority of all tasks are equal.(uses round robin)
+  //time sharing only happens when the priority of tasks are equal.(uses round robin)
   //here only green will execute if priority is 2
   //if we make both red and green as priority 2, then time sharing happens between red and green.meanwhile blue cant execute because of low priority
 

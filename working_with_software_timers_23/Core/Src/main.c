@@ -16,7 +16,7 @@
 //To enable timer we need set configUSE_TIMERS in FreeRTOSConfig.h
 //
 //Two types of timers :
-//1. Auto reload timer : once started, it will restart itself each time it expires resulting in periodic exdecution of its callback function
+//1. Auto reload timer : once started, it will restart itself each time it expires resulting in periodic execution of its callback function
 //2. one-shot timer : once started, it will execute its callback function once only. It can be restarted manually, but will not restart itself.
 //
 //
@@ -24,7 +24,7 @@
 //
 //There are two states of timers:
 //
-//1. Dormant : callback function doesnot execute
+//1. Dormant : callback function does not execute
 //2. Running : executes callback function
 //
 //
@@ -39,7 +39,7 @@
 //
 //TimerHandle_t xTimerCreate( const char* const pcTimerName, TickType_t TimerPeriodInTicks, UBaseType_t uxAutoReload, void *pvTimerID, TimerCallbackFunction_t pxCallbackFunction);
 //
-//BaseType_t xTimerStart(TimerHandle_t xTimer, TickType_t TicksToWait); Here this function takes timer handle as input and tickstowait means how much we need to wait for this fucntion gets executed
+//BaseType_t xTimerStart(TimerHandle_t xTimer, TickType_t TicksToWait); Here this function takes timer handle as input and ticks_to_wait means how much we need to wait for this function gets executed
 //
 //void vTimerSetTimerID(const TimerHandle_t xTimer, void *pvNewID); For setting timer ID
 //

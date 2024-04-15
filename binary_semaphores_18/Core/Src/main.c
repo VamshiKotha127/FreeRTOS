@@ -22,13 +22,13 @@
 //
 //BaseType_t xSemaphoreGiveFromISR(SemaphoreHandle_t xSemaphore, BaseType_t *pxHigherPriortyTaskWoken);
 //
-//I freertos, all the ISR functions will have ISR at the end of the name
+//In freertos, all the ISR functions will have ISR at the end of the name
 //
 //Suppose, if we want to use xSemaphoreGive in an interrupt service routine, we need to use xSemaphoreGiveFromISR
 //
 //For taking the semaphore --> BaseType_t xSemaphoreTake(SemaphoreHandle_t xSemaphore, TickType_t xTicksToWait);
 //
-//Bydefault counting semaphores are not enables. To enable them, use configUSE_COUNTING_SEMAPHORES 1 in FreeRTOSConfig.h
+//By default counting semaphores are not enables. To enable them, use configUSE_COUNTING_SEMAPHORES 1 in FreeRTOSConfig.h
 //
 //SemaphoreHandle_t xSemaphoreCreateCounting(UBaseType_t uxMaxCount, UBaseType_t uxInitialCount);
 //generally initiaCOunt is 0
@@ -56,7 +56,7 @@
 //
 //only the gatekeeper task is allowed to access the resource directly. Any other task needing to access the resource can do so only by indirectly by using the services of the gatekeeper
 //
-//we use gatekeeper task approach to reduce the problems that we face when we dont configure our semaphores
+//we use gatekeeper task approach to reduce the problems that we face when we do not configure our semaphores
 //
 
 UART_HandleTypeDef huart2;
@@ -119,7 +119,7 @@ void vRedLedControllerTask(void *pvParameters)
 		printf("This is red task \r\n");
 		xSemaphoreGive(xBinarySemaphore);
 		vTaskDelay(1);//added 1 tick delay
-		//This is added becasuse printf may cause the task to get time sliced with releasing the semaphore.
+		//This is added because printf may cause the task to get time sliced with releasing the semaphore.
 		// when it again gets the chance to start from where it left, it might again take the semaphore making the semaphore inaccessible to other tasks
 
 	}

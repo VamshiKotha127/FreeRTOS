@@ -124,7 +124,7 @@ void vGreenLedControllerTask(void *pvParameters)
 			resume_monitor++;
 			if(resume_monitor >= 30)
 			{
-				vTaskResume(red_handle);//resuming red task. means it will be the queue of ready stage
+				vTaskResume(red_handle);//resuming red task. means it will be in the queue of ready stage
 				resume_monitor=0;
 				is_suspended=false;
 			}

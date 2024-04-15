@@ -40,8 +40,8 @@ int main(void)
 //set configIDLE_SHOULD_YIELD to 1 is used to prevent idle task from consuming CPU time. It means idle task should yield to any high priority task when high priority task comes during idle task time slice
 
 //tick hook is a function that is called by the kernel during each tick interrupt
-//tick hook functions execute within the context of the tick interrupt, and so must be kept very short,must use only a moderate amount of stack space and must not call any FreeRTOS API functions that donot end with FromISR()
-//tick hook function should be light. we need to configure this using configUSE_TICK_HOOK(0 in FreeRTOSConfig.h
+//tick hook functions execute within the context of the tick interrupt, and so must be kept very short,must use only a moderate amount of stack space and must not call any FreeRTOS API functions that do not end with FromISR()
+//tick hook function should be light. we need to configure this using configUSE_TICK_HOOK 0 in FreeRTOSConfig.h
 
   xTaskCreate(vBlueLedControllerTask,
 		  	  "Blue Led Controller",
@@ -111,8 +111,8 @@ void vGreenLedControllerTask(void *pvParameters)
 void vApplicationIdleHook(void)
 {
 	//callback function. This gets called automatically. We have enabled config_idle_hook from freertosconfig.h file
-	IdleTaskProfiler++; // this will get incremented when blue,red,green task is in block stage because of timer
-	//this task wont get time quantum without adding delay in ble,red,green because the priority of idle task is 0 which is less than 1.
+	IdleTaskProfiler++; // this will get incremented when blue,red,green task is in block stage because of delay
+	//this task wont get time quantum without adding delay in blue,red,green because the priority of idle task is 0 which is less than 1.
 	//blue,red,green tasks has priority as 1
 	//clean up code goes here
 }
