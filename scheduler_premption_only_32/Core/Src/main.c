@@ -20,11 +20,11 @@
 //
 //Fixed priority:
 //
-//This scheduler does not change the priority assigned to the tasks being scheduled, but also does not prevent the task from changing their own priority or that of other tasks
+//This scheduler does not change permanently the priority assigned to the tasks being scheduled, but also does not prevent the task from changing their own priority or that of other tasks
 //
 //pre-emptive :
 //
-//This scheduler will immediately preempt the running state task if a task tat has a priority higher than the runnings state task enters the ready state
+//This scheduler will immediately preempt the running state task if a task that has a priority higher than the running state task enters the ready state
 //
 //Time slicing:
 //
